@@ -2,7 +2,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY as string);
 const model = genAI.getGenerativeModel({
-  model: 'gemini-3.1-flash-lite-preview',
+  model: 'gemini-3-flash-preview',
   generationConfig: {
     responseMimeType: 'application/json',
   },
@@ -12,6 +12,73 @@ export interface AnalysisResult {
   summary: string;
   detailedReport: string;
   responsesTable: string;
+}
+
+export async function modifyAnalysisWithAI(
+  existingAnalysis: AnalysisResult,
+  customPrompt: string
+): Promise<AnalysisResult> {
+  const prompt = `You are an expert Google Forms Response Analyst and Professional Report Writer.
+
+I have an existing analysis report based on Google Forms responses. I need you to modify it according to the following new instructions.
+
+EXISTING REPORT SUMMARY:
+${existingAnalysis.summary}
+
+EXISTING DETAILED REPORT:
+${existingAnalysis.detailedReport}
+
+EXISTING RESPONSES TABLE:
+${existingAnalysis.responsesTable}
+
+USER CUSTOM MODIFICATION INSTRUCTIONS:
+${customPrompt}
+
+Please strictly follow the above instructions to update and modify the existing analysis.
+
+────────────────────────────
+1. SUMMARIZED LIST OF ALL RESPONSES (responsesTable)
+────────────────────────────
+- Create a professionally formatted Markdown TABLE.
+- Modify the existing table if requested, otherwise keep it as is.
+
+────────────────────────────
+2. DETAILED ANALYTICAL REPORT (detailedReport)
+────────────────────────────
+- Create a comprehensive, professional Markdown report.
+- Apply the user's custom instructions to update the tone, focus, or structure of the report.
+
+Output MUST be valid JSON with this exact structure:
+{
+  "summary": "A short 1-2 sentence summary of the report to be used in a sidebar history list.",
+  "detailedReport": "The COMPLETE professional markdown report containing the Detailed Analytical Report.",
+  "responsesTable": "The beautifully formatted markdown TABLE listing EVERY individual response as requested."
+}
+
+Requirements:
+- Ensure strictly valid JSON without any markdown formatting wrappers outside the JSON block.`;
+
+  const result = await model.generateContent(prompt);
+  const response = result.response;
+  const content = response.text();
+
+  if (!content) {
+    throw new Error('No response from AI service');
+  }
+
+  let parsedResult: AnalysisResult;
+  try {
+    parsedResult = JSON.parse(content);
+  } catch (err) {
+    throw new Error('AI returned invalid JSON');
+  }
+
+  // Validate structure
+  if (!parsedResult.summary || !parsedResult.detailedReport || !parsedResult.responsesTable) {
+    throw new Error('AI returned incomplete analysis structure');
+  }
+
+  return parsedResult;
 }
 
 export async function analyzeWithAI(

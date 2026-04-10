@@ -2,10 +2,57 @@ import { Response, NextFunction } from 'express';
 import Analysis from '../models/Analysis';
 import User from '../models/User';
 import { AuthRequest } from '../middleware/auth';
-import { analyzeWithAI } from '../services/aiService';
+import { analyzeWithAI, modifyAnalysisWithAI } from '../services/aiService';
 import { generateAnalysisPDF } from '../utils/pdfGenerator';
 
 const FREE_ANALYSIS_LIMIT = 3;
+
+export async function modifyAnalysis(
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    const { customPrompt } = req.body;
+
+    if (!customPrompt) {
+      res.status(400).json({ error: 'Custom prompt is required.' });
+      return;
+    }
+
+    const analysis = await Analysis.findOne({
+      _id: req.params.id,
+      userId: req.user!.userId,
+    }).populate('uploadId', 'originalName rowCount columnNames');
+
+    if (!analysis) {
+      res.status(404).json({ error: 'Analysis not found.' });
+      return;
+    }
+
+    if (!analysis.detailedReport || !analysis.responsesTable) {
+       res.status(400).json({ error: 'Cannot modify legacy analyses without detailed reports.' });
+       return;
+    }
+
+    const existingAnalysis = {
+      summary: analysis.summary,
+      detailedReport: analysis.detailedReport,
+      responsesTable: analysis.responsesTable,
+    };
+
+    const result = await modifyAnalysisWithAI(existingAnalysis, customPrompt);
+
+    analysis.summary = result.summary;
+    analysis.detailedReport = result.detailedReport;
+    analysis.responsesTable = result.responsesTable;
+    await analysis.save();
+
+    res.status(200).json({ analysis });
+  } catch (err) {
+    next(err);
+  }
+}
 
 export async function analyzeData(
   req: AuthRequest,
