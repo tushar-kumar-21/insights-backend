@@ -116,6 +116,8 @@ export async function getProfile(
         analysisCount: user.analysisCount,
         stripeCustomerId: user.stripeCustomerId,
         stripeSubscriptionId: user.stripeSubscriptionId,
+        googleAccessToken: user.googleAccessToken,
+        webhookSecret: user.webhookSecret,
       },
     });
   } catch (err) {

@@ -89,6 +89,7 @@ export async function analyzeData(
     const analysis = await Analysis.create({
       userId: req.user!.userId,
       uploadId,
+      source: 'upload',
       ...result,
     });
 

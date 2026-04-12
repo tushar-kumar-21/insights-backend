@@ -99,9 +99,9 @@ export async function analyzeWithAI(
     })
     .join('\n');
 
-  const prompt = `You are an expert Google Forms Response Analyst and Professional Report Writer.
+  const prompt = `You are a Senior Hiring Strategist and Data Analyst. Your goal is to deeply analyze datasets (primarily applicant data) and generate a high-impact hiring intelligence report.
 
-I have uploaded/submitted a CSV file containing all the Google Forms responses.
+I have uploaded/submitted a CSV file containing responses.
 
 CSV DATA:
 Columns: ${columns.join(', ')}
@@ -110,54 +110,67 @@ ${formattedData}
 ${customPrompt ? `USER CUSTOM INSTRUCTIONS:
 ${customPrompt}
 
-Please strictly follow the above instructions while analyzing the data.` : ''}
+IMPORTANT: If these custom instructions request a different type of analysis or focus, prioritize them. However, always strive to maintain the depth, metrics, and professional structure defined in the steps below where applicable.` : ''}
 
-Please analyze the complete CSV and create a professional, well-structured output.
+Please analyze the CSV and create a professional, well-structured output following these steps:
+
+-------------------------------------
+STEP 1: Data Preparation
+- Clean missing/null values intelligently.
+- Normalize numeric values and standardize relevant units (e.g., salary, experience).
+- Extract individual skills/key attributes into a structured format.
+
+-------------------------------------
+STEP 2: Derive Advanced Metrics
+Calculate relevant metrics for each record (e.g., for hiring: Salary Hike %, Skill Strength Score, Hireability Score (0-100), Risk Score).
+Apply similar analytical rigor to non-hiring data if applicable.
+
+-------------------------------------
+STEP 3: Intelligent Segmentation
+Segment the entries into meaningful categories (e.g., Top Performers, Budget Efficient, Fast Joiners, High Potential, Risky Candidates).
+
+-------------------------------------
+STEP 4: Deep Insights (IMPORTANT)
+Generate insights uncovering correlations, patterns, and anomalies (e.g., skill vs. salary correlation, experience vs. expectation, common traits of top performers).
+
+-------------------------------------
+STEP 5: Recommendations
+Suggest an ideal strategy based on the analysis.
+- Identify Top 5 entries (with reasons).
+- Identify "Hidden Gems" or undervalued entries.
+- Identify entries to avoid/be cautious of (with reasoning).
+
+-------------------------------------
+STEP 6: Output Format (MUST FOLLOW THIS)
+
+The "detailedReport" in the JSON output must follow this structure:
+1. Executive Summary (short, impactful)
+2. Key Insights (bullet points)
+3. Metrics Summary (averages, percentages, etc.)
+4. Segmentation Summary
+5. Top Candidates/Entries (table with reasoning)
+6. Hidden Gems
+7. Risky/Cautionary Entries
+8. Final Strategy Recommendation
 
 ────────────────────────────
 1. SUMMARIZED LIST OF ALL RESPONSES (responsesTable)
 ────────────────────────────
 - Create a professionally formatted Markdown TABLE.
-- Columns should be: "Response #", "Summary of Answer", "Notable/Standout Info".
-- Summarize EVERY individual response clearly and concisely in the table.
-- Do not copy raw CSV text. Make it human-friendly and easy to read.
-
-────────────────────────────
-2. DETAILED ANALYTICAL REPORT (detailedReport)
-────────────────────────────
-Create a comprehensive, professional Markdown report with the following sub-sections:
-
-• Overview
-  - Total number of responses
-  - Date range of responses (if timestamp column exists)
-  - Any demographic summary (age, gender, location, etc. if available)
-
-• Key Insights & Trends
-  - Major patterns and common themes across all responses
-  - Most frequent answers for each question
-
-• Question-wise Summary
-  - Summarize responses for every question clearly (use tables where helpful)
-
-• Notable Findings
-  - Outliers, unique opinions, or surprising answers
-  - Any correlations you notice between questions
-
-• Actionable Recommendations
-  - Practical suggestions based on the data (what the results imply and what should be done next)
-
-Use proper markdown formatting (headings, bullet points, tables, bold text) to make everything clean and professional. 
-Keep the language clear, objective, and easy to understand. 
+- Columns should be: "Response #", "Summary of Entry", "Notable/Standout Info".
+- Summarize EVERY individual response clearly and concisely.
 
 Output MUST be valid JSON with this exact structure:
 {
   "summary": "A short 1-2 sentence summary of the report to be used in a sidebar history list.",
-  "detailedReport": "The COMPLETE professional markdown report containing the Detailed Analytical Report (Overview, Key Insights, etc) with proper markdown formatting.",
-  "responsesTable": "The beautifully formatted markdown TABLE listing EVERY individual response as requested."
+  "detailedReport": "The COMPLETE professional markdown report following the 8-point structure defined in Step 6.",
+  "responsesTable": "The beautifully formatted markdown TABLE listing EVERY individual response."
 }
 
 Requirements:
-- Ensure strictly valid JSON without any markdown formatting wrappers outside the JSON block.`;
+- Ensure strictly valid JSON without any markdown formatting wrappers outside the JSON block.
+- Do NOT just list data — analyze deeply.
+- Provide reasoning for every conclusion.`;
 
   const result = await model.generateContent(prompt);
   const response = result.response;

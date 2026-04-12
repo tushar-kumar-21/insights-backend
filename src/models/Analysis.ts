@@ -2,11 +2,13 @@ import mongoose, { Document, Schema } from 'mongoose';
 
 export interface IAnalysis extends Document {
   userId: mongoose.Types.ObjectId;
-  uploadId: mongoose.Types.ObjectId;
+  uploadId?: mongoose.Types.ObjectId;
+  formId?: string;
+  source: 'upload' | 'google_form';
   summary: string;
   detailedReport?: string;
   responsesTable?: string;
-  markdownReport?: string; // Kept for backwards compatibility
+  markdownReport?: string;
 }
 
 const analysisSchema = new Schema<IAnalysis>(
@@ -19,7 +21,16 @@ const analysisSchema = new Schema<IAnalysis>(
     uploadId: {
       type: Schema.Types.ObjectId,
       ref: 'Upload',
-      required: true,
+      required: false,
+    },
+    formId: {
+      type: String,
+      required: false,
+    },
+    source: {
+      type: String,
+      enum: ['upload', 'google_form'],
+      default: 'upload',
     },
     summary: {
       type: String,

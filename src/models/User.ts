@@ -9,6 +9,10 @@ export interface IUser extends Document {
   stripeCustomerId?: string;
   stripeSubscriptionId?: string;
   analysisCount: number;
+  googleAccessToken?: string;
+  googleRefreshToken?: string;
+  googleTokenExpiry?: number;
+  webhookSecret?: string;
   comparePassword(candidatePassword: string): Promise<boolean>;
 }
 
@@ -41,6 +45,13 @@ const userSchema = new Schema<IUser>(
     analysisCount: {
       type: Number,
       default: 0,
+    },
+    googleAccessToken: String,
+    googleRefreshToken: String,
+    googleTokenExpiry: Number,
+    webhookSecret: {
+      type: String,
+      default: () => Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15),
     },
   },
   { timestamps: true }
